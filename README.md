@@ -1,4 +1,3 @@
-v1-java-oauthclient-google
-==========================
+# Client for query.v1
 
-OAuth2 Client in Java for VersionOne API using Google OAuth Java Client
+Sample Java client demonstrating OAuth2, YAML Queries, and JSON Responses.
