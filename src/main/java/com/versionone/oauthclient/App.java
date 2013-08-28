@@ -32,7 +32,7 @@ import com.versionone.queryv1.request.json.Query;
 public class App {
 
     // Currently VersionOne only has a single OAuth security scope.
-    private static final String SCOPE = "apiv1";
+    private static final String SCOPE = "query-api-1.0";
 
     // Global instance of the HTTP transport.
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
