@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
@@ -14,15 +16,18 @@ import com.google.api.client.auth.oauth2.TokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.extensions.java6.auth.oauth2.FileCredentialStore;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.versionone.oauthclient.jsonfilesecrets.JsonFileRepository;
+import com.versionone.queryv1.request.json.Query;
 
 public class App {
 
@@ -164,25 +169,34 @@ public class App {
         // Get the VersionOne instance from client_secrets
         GenericUrl v1url = new GenericUrl(secrets.getServerBaseUri());
         // Add the OAuth API end-point
-        v1url.getPathParts().add("rest-1.oauth.v1");
-        // Add a simple data query for the currently logged in member
-        v1url.getPathParts().add("Data");
-        v1url.getPathParts().add("Member");
-        v1url.set("where", "IsSelf=\'true\'");
+        v1url.getPathParts().add("query.v1");
         
-        HttpRequest v1request = requestFactory.buildGetRequest(v1url);
+        // A simple data query for the currently logged in member
+        Query q = new Query();
+        // From is the asset type
+        q.setFrom("Member");
+        // Select the attributes
+        q.getSelect().add("Name");
+        q.getSelect().add("Description");
+        // Where filters to just the logged in member
+        q.getWhere().put("IsSelf", "true");
+        // query.v1 takes a list of queries as a request
+        List<Query> request = new LinkedList<Query>();
+        request.add(q);
+        HttpContent content = new JsonHttpContent(JSON_FACTORY, request);
+        
+        HttpRequest v1request = requestFactory.buildPostRequest(v1url, content);
         System.out.printf("    %s %s\n", v1request.getRequestMethod(), v1request.getUrl().toString());
         System.out.printf("    Headers: %s\n", v1request.getHeaders().toString());
+        System.out.printf("    JSON:\n");
+        System.out.println(JSON_FACTORY.toPrettyString(request));
 
         System.out.println("  [Response]");
         HttpResponse v1response = v1request.execute();
         BufferedReader in = new BufferedReader(new InputStreamReader(v1response.getContent()));
-        String inputLine;
         System.out.printf("    Headers: %s\n", v1response.getHeaders().toString());
         System.out.println("    Body:");
-        while ((inputLine = in.readLine()) != null) {
-            System.out.println(inputLine);
-        }
+        System.out.println(v1response.parseAsString());
         in.close();
     }
 
